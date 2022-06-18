@@ -1,9 +1,9 @@
 "use-strict";
-var express = require("express");
+import express from "express";
 var router = express.Router();
 
-const loginController = require("../controllers/loginController");
+import login from "../controllers/loginController.js";
 
-router.post("/authenticate", loginController.login);
+router.post("/authenticate", login);
 
-module.exports = router;
+export default router;

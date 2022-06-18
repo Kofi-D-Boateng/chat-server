@@ -1,5 +1,7 @@
-const pool = require("../config/database");
-const bcrypt = require("bcrypt");
+"use strict";
+import pool from "../config/database.js";
+import bcrypt from "bcrypt";
+
 const getLogin = async ({ email: email, password: password }) => {
   const db = await pool.connect();
   try {
@@ -87,6 +89,4 @@ const getDoctor = async ({ id: id, db: db }) => {
   }
 };
 
-module.exports = {
-  getLogin,
-};
+export { getLogin, getAppointment, getDoctor };

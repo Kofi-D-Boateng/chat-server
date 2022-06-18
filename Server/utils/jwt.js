@@ -1,11 +1,10 @@
 "use strict";
-const jwt = require("jsonwebtoken");
-require("dotenv").config;
-const secret = "somesecret1234";
+import jwt from "jsonwebtoken";
+import { config } from "../config/config";
 
 const jwt_verify = async (authToken) => {
   try {
-    const isValid = jwt.verify(authToken, secret);
+    const isValid = jwt.verify(authToken, config.JWT_SECRET);
     if (isValid) {
       return {
         passed: true,
@@ -23,12 +22,9 @@ const jwt_verify = async (authToken) => {
 const jwt_sign = async (token) => {
   const payload = {
     token: token,
-    expiresIn: "10800000",
+    expiresIn: config.EXPIRESIN,
   };
-  return jwt.sign(payload, secret, { expiresIn: "10800000" });
+  return jwt.sign(payload, config.JWT_SECRET);
 };
 
-module.exports = {
-  jwt_verify,
-  jwt_sign,
-};
+export { jwt_verify, jwt_sign };

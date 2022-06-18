@@ -1,8 +1,8 @@
 "use strict";
-const pool = require("../config/database");
-const { jwt_sign } = require("../utils/jwt");
-const crypto = require("crypto");
-const { getLogin } = require("../utils/query");
+import { jwt_sign } from "../utils/jwt.js";
+import { randomBytes } from "crypto";
+import { getLogin } from "../utils/query.js";
+
 const login = async (req, res) => {
   const { email, password } = req.body.user;
 
@@ -20,7 +20,7 @@ const login = async (req, res) => {
     return;
   }
 
-  const token = crypto.randomBytes(12).toString("base64");
+  const token = randomBytes(12).toString("base64");
   const signedToken = await jwt_sign(token);
   const expiresIn = 10800;
   res.json({
@@ -38,6 +38,4 @@ const login = async (req, res) => {
   });
 };
 
-module.exports = {
-  login,
-};
+export default login;

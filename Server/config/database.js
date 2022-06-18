@@ -1,7 +1,8 @@
 "use strict";
-require("dotenv").config();
-const Pool = require("pg").Pool;
+import pg from "pg";
+
+const Pool = pg.Pool;
 
 const pool = new Pool({});
 
-module.exports = pool;
+export default pool;

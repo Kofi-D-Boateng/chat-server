@@ -1,30 +1,33 @@
 "use strict";
-require("dotenv").config();
-const PORT = process.env.PORT;
-const express = require("express");
-const logger = require("morgan");
+import "dotenv/config";
+import { config } from "./config/config.js";
+import { Server } from "socket.io";
+import { createServer } from "http";
+import express from "express";
+import morgan from "morgan";
+import cors from "cors";
 const app = express();
-const cors = require("cors");
+
 // PROXY WHITELIST
 const whitelist = {
-  origin: "http://localhost:3000",
+  origin: config.ORIGINS,
   credentials: true,
   optionSuccessStatus: 200,
-  method: ["GET", "POST"],
+  method: config.METHODS,
 };
-app.use(logger("dev"));
+app.use(morgan(config.LOGGER_TYPE));
 app.use(cors(whitelist));
 app.use(express.json());
 
 // SERVER
-const server = require("http").createServer(app);
+const server = createServer(app);
 // SOCKET
-const io = require("socket.io")(server, {
+const io = new Server(server, {
   cors: whitelist,
 });
 
 // ROUTE DEPENDENCIES
-const login = require("./routes/login");
+import login from "./routes/login.js";
 
 const users = {};
 
@@ -100,4 +103,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(4000, () => console.log(`Server listening on port: ${PORT}`));
+server.listen(config.PORT, () =>
+  console.log(`Server listening on port: ${config.PORT}`)
+);
