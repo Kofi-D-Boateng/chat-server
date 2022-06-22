@@ -1,92 +1,105 @@
 "use strict";
-import pool from "../config/database.js";
 import bcrypt from "bcrypt";
+import { dbConnection } from "../config/database/mongodb.js";
+import { CONFIG } from "../config/config.js";
+import { MongoInvalidArgumentError } from "mongodb";
+import { user } from "../structs/mongo/users.js";
 
-const getLogin = async ({ email: email, password: password }) => {
-  const db = await pool.connect();
+const getUser = async ({ username: username, password: password }) => {
   try {
-    const LOGIN_QUERY = {
-      text: "SELECT * FROM patient WHERE email = $1",
-      values: [`${email}`],
-    };
-    const user = await db.query(LOGIN_QUERY);
-    if (user.rowCount === 0) {
-      return null;
+    const userRef = user;
+    await dbConnection.connect();
+    console.log("Connected to db....");
+    const GETDB = dbConnection.db(CONFIG.MONGO_DB_NAME);
+    if (!GETDB.databaseName === CONFIG.MONGO_DB_NAME) {
+      throw new Error(MongoInvalidArgumentError);
     }
-    const user_id = user.rows[0]["user_id"];
-    const encryptedPassword = user.rows[0].password;
-    const decrypt = await bcrypt.compare(password, encryptedPassword);
+    const USER = GETDB.collection(CONFIG.USERS_COLLECTION);
 
-    if (!decrypt) {
-      return null;
+    if (USER.collectionName !== CONFIG.USERS_COLLECTION) {
+      throw new Error(MongoInvalidArgumentError);
     }
 
-    const getInfo = await getAppointment({ id: user_id, db: db });
-
-    if (getInfo.length === 0 || getInfo === null) {
-      return null;
+    const SEARCH = await USER.findOne({ username: username });
+    if (!SEARCH) {
+      return user;
     }
 
-    const roomInfo = getInfo[3];
+    userRef.key = SEARCH.key;
+    userRef.password = SEARCH.password;
+    userRef.username = SEARCH.username;
 
-    const docInfo = await getDoctor({ id: roomInfo.doctor_id, db: db });
-    if (docInfo.length === 0 || docInfo === null) {
-      return null;
+    const PWCHECK = await bcrypt.compare(password, user.password);
+
+    if (PWCHECK) {
+      return userRef;
     }
-
-    const user_first = user.rows[0].first_name;
-    const user_last = user.rows[0].last_name;
-    const apptTime = roomInfo.appt_time;
-    const room_id = roomInfo.room_id;
-    const injury = roomInfo.type_of_injury;
-    const doc_first = docInfo[0].first_name;
-    const doc_last = docInfo[0].last_name;
-    const doc_title = docInfo[0].title;
-
-    const data = {
-      userFirst: user_first,
-      userLast: user_last,
-      injury: injury,
-      docFirst: doc_first,
-      docLast: doc_last,
-      docTitle: doc_title,
-      roomID: room_id,
-      apptTime: apptTime,
-    };
-    db.release();
-    return data;
   } catch (error) {
     console.log(error);
-    return null;
+    return user;
   }
 };
 
-const getAppointment = async ({ id: id, db: db }) => {
-  const ROOM_QUERY = {
-    text: "SELECT * FROM appointment WHERE patient_id = $1",
-    values: [`${id}`],
-  };
+const addNewUser = async ({
+  email: email,
+  username: username,
+  password: password,
+  dob: dob,
+}) => {
   try {
-    const roomInfo = await db.query(ROOM_QUERY);
-    return roomInfo.rows;
+    console.log(user);
+    let userRef = user;
+    await dbConnection.connect();
+    console.log("Connected to db....");
+    const GETDB = dbConnection.db(CONFIG.MONGO_DB_NAME);
+    if (!GETDB.databaseName === CONFIG.MONGO_DB_NAME) {
+      throw new Error(MongoInvalidArgumentError);
+    }
+    const USER = GETDB.collection(CONFIG.USERS_COLLECTION);
+    const length = await USER.countDocuments();
+
+    if (USER.collectionName !== CONFIG.USERS_COLLECTION) {
+      throw new Error(MongoInvalidArgumentError);
+    }
+    const SEARCH = await USER.find({
+      $or: [{ email: email }, { username: username }],
+    }).toArray();
+
+    if (SEARCH.length > 0) {
+      SEARCH.forEach((s) => {
+        if (s.username === username) {
+          throw new Error("Username is taken.");
+        }
+        if (s.email === email) {
+          throw new Error("Email is taken.");
+        }
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(
+      password,
+      CONFIG.PASSWORD_SALT_ROUNDS
+    );
+    userRef.key = length;
+    userRef.username = username;
+    userRef.email = email;
+    userRef.password = hashedPassword;
+    userRef.createdAt = new Date().toISOString();
+    userRef.dob = dob;
+    await USER.insertOne(userRef).catch(() => {
+      throw new Error(`Failed to insert`);
+    });
+    userRef = user;
+    return { wasSuccessful: true, msg: "done" };
   } catch (error) {
-    console.log(error);
-    return null;
+    if (error.message === "Email is taken") {
+      return { wasSuccessful: false, msg: "Email is taken." };
+    } else if (error.message === "Username is taken.") {
+      return { wasSuccessful: false, msg: "Username is taken." };
+    } else {
+      return { wasSuccessful: false, msg: error.message };
+    }
   }
 };
 
-const getDoctor = async ({ id: id, db: db }) => {
-  const DOCTOR_QUERY = {
-    text: "SELECT * FROM doctor WHERE user_id = $1",
-    values: [`${id}`],
-  };
-  try {
-    const doctor = await db.query(DOCTOR_QUERY);
-    return doctor.rows;
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
-};
-
-export { getLogin, getAppointment, getDoctor };
+export { getUser, addNewUser };

@@ -1,41 +1,32 @@
 "use strict";
-import { jwt_sign } from "../utils/jwt.js";
 import { randomBytes } from "crypto";
-import { getLogin } from "../utils/query.js";
+import { getUser } from "../utils/query.js";
+import { CONFIG } from "../config/config.js";
 
-const login = async (req, res) => {
-  const { email, password } = req.body.user;
+const _LoginUser = async (req, res) => {
+  const { username, password } = req.body;
 
-  if (email.trim().length == 0 || password.trim().length == 0) {
-    res.json({ status: 204 });
+  if (
+    !username ||
+    !password ||
+    username.trim().length == 0 ||
+    password.trim().length == 0
+  ) {
+    res.status(401).json();
     return;
   }
 
-  const callData = await getLogin({ email: email, password: password });
+  const foundUser = await getUser({ username: username, password: password });
 
-  if (callData === null) {
-    res.json({
-      status: 401,
-    });
+  if (foundUser.username.trim().length <= 0) {
+    res.status(401).json();
     return;
   }
 
-  const token = randomBytes(12).toString("base64");
-  const signedToken = await jwt_sign(token);
-  const expiresIn = 10800;
-  res.json({
-    status: 200,
-    token: signedToken,
-    expiresIn: expiresIn,
-    user_first: callData.userFirst,
-    user_last: callData.userLast,
-    doc_first: callData.docFirst,
-    doc_last: callData.docLast,
-    doc_title: callData.docTitle,
-    injury: callData.injury,
-    appt_time: callData.apptTime,
-    room: callData.roomID,
-  });
+  const token = randomBytes(12).toString(CONFIG.TOKEN_STRING_FORMAT);
+  res
+    .status(200)
+    .json({ token: token, key: foundUser.key, username: foundUser.username });
 };
 
-export default login;
+export default _LoginUser;
