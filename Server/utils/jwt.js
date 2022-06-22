@@ -1,10 +1,10 @@
 "use strict";
 import jwt from "jsonwebtoken";
-import { config } from "../config/config";
+import { CONFIG } from "../config/config.js";
 
 const jwt_verify = async (authToken) => {
   try {
-    const isValid = jwt.verify(authToken, config.JWT_SECRET);
+    const isValid = jwt.verify(authToken, CONFIG.JWT_SECRET);
     if (isValid) {
       return {
         passed: true,
@@ -24,7 +24,7 @@ const jwt_sign = async (token) => {
     token: token,
     expiresIn: config.EXPIRESIN,
   };
-  return jwt.sign(payload, config.JWT_SECRET);
+  return jwt.sign(payload, CONFIG.JWT_SECRET);
 };
 
 export { jwt_verify, jwt_sign };

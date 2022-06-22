@@ -1,6 +1,6 @@
 "use strict";
 import "dotenv/config";
-import { config } from "./config/config.js";
+import { CONFIG, API_VERSION } from "./config/config.js";
 import { Server } from "socket.io";
 import { createServer } from "http";
 import express from "express";
@@ -9,13 +9,14 @@ import cors from "cors";
 const app = express();
 
 // PROXY WHITELIST
+console.log(CONFIG.ORIGINS);
 const whitelist = {
-  origin: config.ORIGINS,
+  origin: CONFIG.ORIGINS,
   credentials: true,
   optionSuccessStatus: 200,
-  method: config.METHODS,
+  method: CONFIG.METHODS,
 };
-app.use(morgan(config.LOGGER_TYPE));
+app.use(morgan(CONFIG.LOGGER_TYPE));
 app.use(cors(whitelist));
 app.use(express.json());
 
@@ -28,16 +29,19 @@ const io = new Server(server, {
 
 // ROUTE DEPENDENCIES
 import login from "./routes/login.js";
+import signup from "./routes/signup.js";
 
 const users = {};
+let length = 0;
 
-app.use("/login", login);
+app.use(`/${API_VERSION.VERSION}/login`, login);
+app.use(`/${API_VERSION.VERSION}/signup`, signup);
 io.on("connection", (socket) => {
   socket.on("join-room", (data) => {
     socket.emit("myID", socket.id);
     if (users[data.room]) {
-      const length = users[data.room].length;
-      if (length === 4) {
+      length = users[data.room].length;
+      if (length === CONFIG.MAX_ROOM_CAPACITY) {
         socket.emit("room-status", { isFull: true });
         return;
       }
@@ -103,6 +107,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(config.PORT, () =>
-  console.log(`Server listening on port: ${config.PORT}`)
+server.listen(CONFIG.PORT, () =>
+  console.log(`Server listening on port:${CONFIG.PORT}`)
 );
