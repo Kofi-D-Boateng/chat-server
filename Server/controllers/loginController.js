@@ -1,6 +1,6 @@
 "use strict";
 import { randomBytes } from "crypto";
-import { getUser } from "../utils/query.js";
+import { getUser } from "../utils/mongo/query.js";
 import { CONFIG } from "../config/config.js";
 
 const _LoginUser = async (req, res) => {

@@ -1,9 +1,9 @@
 "use strict";
 import bcrypt from "bcrypt";
-import { dbConnection } from "../config/database/mongodb.js";
-import { CONFIG } from "../config/config.js";
+import { dbConnection } from "../../config/database/mongodb.js";
+import { CONFIG } from "../../config/config.js";
 import { MongoInvalidArgumentError } from "mongodb";
-import { user } from "../structs/mongo/users.js";
+import { user } from "../../structs/mongo/users.js";
 
 const getUser = async ({ username: username, password: password }) => {
   try {

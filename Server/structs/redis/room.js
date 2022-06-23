@@ -1,6 +1,7 @@
 "use strict";
 export const room = {
-  roomID: "",
+  key: 0,
+  room_name: "",
   capacity: 0,
   members: [],
 };

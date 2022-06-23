@@ -30,12 +30,14 @@ const io = new Server(server, {
 // ROUTE DEPENDENCIES
 import login from "./routes/login.js";
 import signup from "./routes/signup.js";
+import search from "./routes/search.js";
 
 const users = {};
 let length = 0;
 
 app.use(`/${API_VERSION.VERSION}/login`, login);
 app.use(`/${API_VERSION.VERSION}/signup`, signup);
+app.use(`/${API_VERSION.VERSION}/rooms`, search);
 io.on("connection", (socket) => {
   socket.on("join-room", (data) => {
     socket.emit("myID", socket.id);
