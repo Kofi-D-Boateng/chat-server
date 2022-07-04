@@ -27,4 +27,5 @@ export const ROUTES = {
   USER_SETTINGS: "/configure-room",
   USER_LOGIN: "/authenticate-user",
   FIND_ROOM: "/find-room",
+  CREATE_ROOM: "/create-room",
 };
