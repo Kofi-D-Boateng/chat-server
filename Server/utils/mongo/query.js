@@ -3,11 +3,19 @@ import bcrypt from "bcrypt";
 import { dbConnection } from "../../config/database/mongodb.js";
 import { CONFIG } from "../../config/config.js";
 import { MongoInvalidArgumentError } from "mongodb";
-import { user } from "../../structs/mongo/users.js";
+import { user, User } from "../../classes/mongo/users.js";
 
 const getUser = async ({ username: username, password: password }) => {
   try {
-    const userRef = user;
+    const userRef = new User(
+      user.key,
+      username,
+      user.email,
+      password,
+      user.createdAt,
+      user.dob
+    );
+    console.log(userRef);
     await dbConnection.connect();
     console.log("Connected to db....");
     const GETDB = dbConnection.db(CONFIG.MONGO_DB_NAME);

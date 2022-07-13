@@ -1,31 +1,58 @@
 "use strict";
 import redis from "../../config/database/redis.js";
-import { room } from "../../structs/redis/room.js";
+import { Room, room } from "../../classes/redis/room.js";
 
-const searchForRoom = async ({ key: key }) => {
-  const search = await redis.GET(key);
-  const roomRef = room;
-  if (search) {
-    const r = await JSON.parse(search);
-    roomRef.key = r.key;
-    roomRef.roomName = r.room_name;
-    roomRef.maxCapacity = r.maxCapacity;
-    roomRef.members = r.members;
+const _searchForRoom = async ({ key: key }) => {
+  const roomRef = new Room({
+    key: key,
+    roomName: room.roomName,
+    maxCapacity: room.maxCapacity,
+    members: room.members,
+  });
+  console.log(roomRef);
+  const r = await redis.GET(roomRef.key);
+  if (r) {
+    const ref = await JSON.parse(r);
+    roomRef.roomName = ref.roomName;
+    roomRef.maxCapacity = ref.maxCapacity;
+    roomRef.members = ref.members;
     return roomRef;
   }
-  return room;
+  roomRef.roomName = room.roomName;
+  roomRef.maxCapacity = room.maxCapacity;
+  roomRef.members = room.members;
+  return roomRef;
 };
 
-const createRoom = async ({ key: key }) => {
-  const room = await redis.GET(key);
-  if (room) {
-    return JSON.parse(room);
+const _createRoom = async ({ key: key }) => {
+  const roomRef = new Room({
+    key: key,
+    roomName: room.roomName,
+    maxCapacity: room.maxCapacity,
+    members: room.members,
+  });
+  const r = await redis.GET(roomRef.key);
+  if (r) {
+    const ref = await JSON.parse(r);
+    roomRef.roomName = ref.roomName;
+    roomRef.maxCapacity = ref.maxCapacity;
+    roomRef.members = ref.members;
+    return roomRef;
   }
-  return {};
+  roomRef.roomName = room.roomName;
+  roomRef.maxCapacity = room.maxCapacity;
+  roomRef.members = room.members;
+  await redis.SET(roomRef.key, JSON.stringify(roomRef));
+  return roomRef;
 };
 
-const removeUserFromRoom = async () => {};
+const _removeUserFromRoom = async () => {};
 
-const deleteRoomFromMemory = async () => {};
+const _deleteRoomFromMemory = async () => {};
 
-export { searchForRoom, removeUserFromRoom };
+export {
+  _searchForRoom,
+  _removeUserFromRoom,
+  _deleteRoomFromMemory,
+  _createRoom,
+};

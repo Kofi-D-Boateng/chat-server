@@ -1,7 +1,7 @@
 "use strict";
 import "dotenv/config";
 import { CONFIG, API_VERSION } from "./config/config.js";
-import { searchForRoom, removeUserFromRoom } from "./utils/redis/query.js";
+import { _searchForRoom, _removeUserFromRoom } from "./utils/redis/query.js";
 import { Server } from "socket.io";
 import { createServer } from "http";
 import express from "express";
