@@ -1,6 +1,7 @@
 "use strict";
 import "dotenv/config";
 import { CONFIG, API_VERSION } from "./config/config.js";
+import { _searchForRoom, _removeUserFromRoom } from "./utils/redis/query.js";
 import { Server } from "socket.io";
 import { createServer } from "http";
 import express from "express";
@@ -30,36 +31,44 @@ const io = new Server(server, {
 // ROUTE DEPENDENCIES
 import login from "./routes/login.js";
 import signup from "./routes/signup.js";
-
-const users = {};
-let length = 0;
+import room from "./routes/room.js";
 
 app.use(`/${API_VERSION.VERSION}/login`, login);
 app.use(`/${API_VERSION.VERSION}/signup`, signup);
+app.use(`/${API_VERSION.VERSION}/rooms`, room);
 io.on("connection", (socket) => {
-  socket.on("join-room", (data) => {
+  socket.on("join-room", async (data) => {
+    const ROOM = await searchForRoom(data.room);
     socket.emit("myID", socket.id);
-    if (users[data.room]) {
-      length = users[data.room].length;
-      if (length === CONFIG.MAX_ROOM_CAPACITY) {
-        socket.emit("room-status", { isFull: true });
+    if (ROOM.roomName.trim().length > 0) {
+      if (
+        ROOM.members.length >= ROOM.maxCapacity ||
+        ROOM.members.length >= CONFIG.MAX_ROOM_CAPACITY
+      ) {
+        socket.emit("room-status", { msg: "full" });
         return;
       }
-      users[data.room].push(socket.id);
+      ROOM.members.push(socket.id);
     } else {
-      users[data.room] = [socket.id];
+      socket.emit("room-status", { msg: "null" });
     }
-    for (const room in users) {
-      console.log(room);
-      for (let i = 0; i < users[room].length; i++) {
-        if (socket.id === users[room][i]) {
-          const usersInRoom = users[room].filter((id) => id !== socket.id);
-          socket.emit("all-users", { users: usersInRoom });
-          socket.join(room);
-        }
+    ROOM.members.forEach((m) => {
+      if (socket.id === m.id) {
+        const usersInRoom = ROOM.members.filter((id) => id !== socket.id);
+        socket.emit("all-users", { users: usersInRoom });
+        socket.join(ROOM.roomName);
       }
-    }
-    console.log(users);
+    });
+    // for (const [user] in ROOM.members) {
+    //   for (let i = 0; i < users[room].length; i++) {
+    //     if (socket.id === users[room][i]) {
+    //       const usersInRoom = users[room].filter((id) => id !== socket.id);
+    //       socket.emit("all-users", { users: usersInRoom });
+    //       socket.join(room);
+    //     }
+    //   }
+    // }
+    console.log(ROOM);
   });
 
   socket.on("sending-signal", (data) => {

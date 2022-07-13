@@ -1,6 +1,6 @@
 "use strict";
 
-import { addNewUser } from "../utils/query.js";
+import { addNewUser } from "../utils/mongo/query.js";
 
 const createNewUser = async (req, res) => {
   const { username, email, password, dob } = req.body;

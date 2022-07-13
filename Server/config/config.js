@@ -14,6 +14,7 @@ export const CONFIG = {
   MONGO_URI: process.env.MONGO_DB_URI,
   MONGO_DB_NAME: process.env.DB_NAME,
   USERS_COLLECTION: process.env.USERS_COLLECTION,
+  LENGTH_OF_TOKEN: +process.env.TOKEN_LENGTH || 12,
   TOKEN_STRING_FORMAT: process.env.TOKEN_STRING_FORMAT || "hex",
   PASSWORD_SALT_ROUNDS: +process.env.SALT_ROUNDS || 10,
 };
@@ -25,4 +26,6 @@ export const API_VERSION = {
 export const ROUTES = {
   USER_SETTINGS: "/configure-room",
   USER_LOGIN: "/authenticate-user",
+  FIND_ROOM: "/find-room",
+  CREATE_ROOM: "/create-room",
 };
